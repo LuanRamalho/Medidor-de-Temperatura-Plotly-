@@ -71,17 +71,17 @@ def update_thermometer(n_clicks, value):
 
     fig = go.Figure()
 
-    # 🔥 MERCÚRIO (CORRIGIDO)
+    # MERCÚRIO (coluna vermelha)
     fig.add_trace(go.Bar(
         x=[0],
         y=[temp - TEMP_MIN],
-        base=TEMP_MIN,
+        base=[TEMP_MIN],
         marker=dict(color='red'),
         width=0.2,
         hoverinfo='skip'
     ))
 
-    # 🔴 BULBO EXTERNO
+    # BULBO EXTERNO (preto)
     fig.add_trace(go.Scatter(
         x=[0],
         y=[TEMP_MIN - 2],
@@ -90,7 +90,7 @@ def update_thermometer(n_clicks, value):
         hoverinfo='skip'
     ))
 
-    # 🔴 BULBO INTERNO
+    # BULBO INTERNO (vermelho)
     fig.add_trace(go.Scatter(
         x=[0],
         y=[TEMP_MIN - 2],
@@ -99,21 +99,25 @@ def update_thermometer(n_clicks, value):
         hoverinfo='skip'
     ))
 
-    # 🔹 MARCAÇÕES (2 em 2 graus)
+    # MARCAÇÕES (2 em 2 graus) + ANOTAÇÕES SÓ A CADA 10 GRAUS À DIREITA
     tick_shapes = []
+    tick_annotations = []
 
     for y in range(TEMP_MIN, TEMP_MAX + 1, 2):
 
-        # Maior a cada 10 graus
+        # Marca maior a cada 10 graus
         if y % 10 == 0:
             x0 = 0.12
             x1 = 0.35
             width = 2
+            font_size = 12
         else:
             x0 = 0.12
             x1 = 0.25
             width = 1
+            font_size = 10
 
+        # linhas das marcações (mantém todas as 2 em 2)
         tick_shapes.append(
             dict(
                 type="line",
@@ -123,6 +127,23 @@ def update_thermometer(n_clicks, value):
                 layer='above'
             )
         )
+
+        # Somente anotar os múltiplos de 10 (à direita)
+        if y % 10 == 0:
+            x_text = 0.42  # ajuste horizontal das anotações (aumente para mover mais à direita)
+            tick_annotations.append(
+                dict(
+                    x=x_text,
+                    y=y,
+                    xref='x',
+                    yref='y',
+                    text=f"{y}°C",
+                    showarrow=False,
+                    xanchor='left',
+                    yanchor='middle',
+                    font=dict(color='black', size=font_size, family='Arial')
+                )
+            )
 
     # Layout
     fig.update_layout(
@@ -137,18 +158,11 @@ def update_thermometer(n_clicks, value):
                 layer='below'
             ),
 
-            # Linha do zero
-            dict(
-                type="line",
-                x0=-0.5, x1=0.5,
-                y0=0, y1=0,
-                line=dict(color="black", width=1),
-                layer='above'
-            ),
-
             # Marcações
             *tick_shapes
         ],
+
+        annotations=tick_annotations,
 
         template="none",
 
@@ -160,15 +174,17 @@ def update_thermometer(n_clicks, value):
             zeroline=False
         ),
 
+        # Oculta os rótulos padrão do eixo Y (retira números do lado esquerdo)
         yaxis=dict(
             range=[TEMP_MIN - 15, TEMP_MAX + 15],
+            showticklabels=False,
             tickmode='linear',
             tick0=TEMP_MIN,
             dtick=10,
-            ticksuffix="°C",
             showline=False,
             fixedrange=True,
-            showgrid=False
+            showgrid=False,
+            zeroline=False  
         ),
 
         height=650,
